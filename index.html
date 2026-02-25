@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GORDACORP // AUDIT EXPERIENCE</title>
+  <meta name="description" content="GORDACORP SAP Audit — Experiencia Inmersiva Soberana">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&family=Anton&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --void: #050505;
+      --lime: #CCFF00;
+      --orange: #FF6F00;
+      --red: #FF2222;
+      --green: #00FF41;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --display: 'Anton', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: #ccc;
+      font-family: var(--mono);
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* === CANVAS BACKGROUND === */
+    #rain-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* === SCANLINES === */
+    .scanlines {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 2px,
+        rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* === VIGNETTE === */
+    .vignette {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+      pointer-events: none;
+      z-index: 9997;
+    }
+
+    /* === HUD === */
+    .hud {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9000;
+      font-size: 11px;
+      color: var(--lime);
+      opacity: 0.45;
+      text-shadow: 0 0 4px var(--lime);
+      letter-spacing: 1.5px;
+    }
+    .hud-tl { position: absolute; top: 20px; left: 25px; }
+    .hud-tr { position: absolute; top: 20px; right: 25px; text-align: right; }
+    .hud-bl { position: absolute; bottom: 20px; left: 25px; }
+    .hud-br { position: absolute; bottom: 20px; right: 25px; text-align: right; }
+    .hud .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .progress-bar {
+      width: 180px; height: 6px;
+      border: 1px solid rgba(204,255,0,0.3);
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: var(--lime);
+      box-shadow: 0 0 8px var(--lime);
+      transition: width 0.3s ease-out;
+    }
+
+    /* === HERO === */
+    .hero {
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .hero-title {
+      font-family: var(--display);
+      font-size: clamp(60px, 12vw, 180px);
+      color: var(--void);
+      background: var(--lime);
+      padding: 10px 40px;
+      text-transform: uppercase;
+      line-height: 1;
+      animation: glitchIn 1.2s ease-out;
+      position: relative;
+    }
+    .hero-title::after {
+      content: 'GORDACORP';
+      position: absolute;
+      top: 4px; left: 44px;
+      color: var(--red);
+      opacity: 0;
+      animation: rgbGhost 3s ease-in-out infinite;
+      z-index: -1;
+    }
+    .hero-sub {
+      font-size: 14px;
+      color: var(--lime);
+      opacity: 0.6;
+      margin-top: 20px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      animation: fadeIn 2s 0.5s both;
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 60px;
+      font-size: 11px;
+      color: var(--lime);
+      opacity: 0.3;
+      letter-spacing: 4px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .hero-scroll .arrow {
+      display: block;
+      font-size: 20px;
+      margin-top: 8px;
+      animation: bounce 1.5s ease-in-out infinite;
+    }
+
+    @keyframes glitchIn {
+      0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+      40% { transform: translateX(5%) skewX(3deg); opacity: 1; }
+      60% { transform: translateX(-2%) skewX(-1deg); }
+      100% { transform: translateX(0) skewX(0); }
+    }
+    @keyframes rgbGhost {
+      0%, 100% { opacity: 0; transform: translate(0, 0); }
+      15% { opacity: 0.4; transform: translate(6px, -2px); }
+      30% { opacity: 0; }
+      70% { opacity: 0.3; transform: translate(-4px, 3px); }
+      85% { opacity: 0; }
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 0.6; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+
+    /* === ACTS SECTION === */
+    .acts-container {
+      position: relative;
+      z-index: 10;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 30px;
+    }
+
+    .act {
+      min-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 0;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .act.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .act-number {
+      font-family: var(--display);
+      font-size: clamp(80px, 15vw, 200px);
+      color: transparent;
+      -webkit-text-stroke: 2px rgba(204,255,0,0.15);
+      line-height: 0.9;
+      margin-bottom: -20px;
+      user-select: none;
+    }
+
+    .act-label {
+      font-size: 10px;
+      color: var(--lime);
+      opacity: 0.4;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .act-title {
+      font-family: var(--display);
+      font-size: clamp(28px, 5vw, 48px);
+      color: var(--lime);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      line-height: 1.1;
+    }
+
+    .act-joke {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #999;
+      border-left: 3px solid var(--lime);
+      padding-left: 20px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .act-joke em { color: var(--lime); font-style: normal; }
+
+    .act-code {
+      background: rgba(204,255,0,0.03);
+      border: 1px solid rgba(204,255,0,0.1);
+      padding: 20px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--green);
+      overflow-x: auto;
+      max-height: 300px;
+      position: relative;
+    }
+    .act-code::before {
+      content: '// GORDA — CÓDIGO ABAP';
+      display: block;
+      color: var(--orange);
+      margin-bottom: 10px;
+      font-size: 10px;
+      letter-spacing: 3px;
+    }
+
+    /* === DIVIDER === */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lime), transparent);
+      opacity: 0.15;
+      margin: 0 auto;
+      max-width: 400px;
+    }
+
+    /* === SYSTEM ERROR FLASH === */
+    .sys-error {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255, 0, 0, 0.04);
+      pointer-events: none;
+      z-index: 9500;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .sys-error.active { opacity: 1; }
+    .sys-error-msg {
+      position: fixed;
+      z-index: 9501;
+      pointer-events: none;
+      font-size: 14px;
+      color: var(--red);
+      text-shadow: 0 0 10px var(--red);
+      opacity: 0;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+      padding: 4px 12px;
+      border: 1px solid rgba(255,0,0,0.2);
+      background: rgba(255,0,0,0.05);
+    }
+    .sys-error-msg.active { opacity: 1; }
+
+    /* === FINALE === */
+    .finale {
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .finale-text {
+      font-family: var(--display);
+      font-size: clamp(40px, 8vw, 100px);
+      color: var(--lime);
+      text-transform: uppercase;
+      text-shadow: 0 0 40px var(--lime), 0 0 80px rgba(204,255,0,0.3);
+    }
+    .finale-sub {
+      font-size: 12px;
+      color: var(--lime);
+      opacity: 0.4;
+      letter-spacing: 4px;
+      margin-top: 20px;
+    }
+
+    /* === MOUSE SPOTLIGHT === */
+    .spotlight {
+      position: fixed;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(204,255,0,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+      transition: left 0.1s, top 0.1s;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="rain-canvas"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div class="spotlight" id="spotlight"></div>
+  <div class="sys-error" id="sys-error"></div>
+  <div class="sys-error-msg" id="sys-error-msg"></div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-tl">GORDACORP://audit<span class="blink"> █</span></div>
+    <div class="hud-tr">
+      <div id="hud-frame">F:00000</div>
+      <div id="hud-load" style="margin-top:4px;opacity:0.5">SYS_LOAD: 42%</div>
+    </div>
+    <div class="hud-bl">SAP/R3 // GORDACORP AUDIT ENGINE v6.6.6</div>
+    <div class="hud-br">
+      PROGRESS: <div class="progress-bar"><div class="fill" id="progress-fill"></div></div> <span id="progress-pct">0%</span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-title">GORDACORP</div>
+    <div class="hero-sub">La Saga SAP — Experiencia Inmersiva</div>
+    <div class="hero-scroll">
+      SCROLL PARA INICIAR AUDITORÍA
+      <span class="arrow">▼</span>
+    </div>
+  </section>
+
+  <!-- ACTS -->
+  <div class="acts-container" id="acts-container"></div>
+
+  <!-- FINALE -->
+  <section class="finale">
+    <div class="finale-text">AUDIT COMPLETE</div>
+    <div class="finale-sub">TOM & OLIVER AGENTS — MISSION ACCOMPLISHED</div>
+  </section>
+
+  <script>
+    // ================================================================
+    // DATA — Extracted from sonrisas_y_gordas.md
+    // ================================================================
+    const ACTS = [
+      {
+        title: "El Consultor y el Maratón",
+        joke: `¿Por qué los consultores ABAP no corren maratones? Porque cuando ven la señal de "Km 21,097", piensan: <em>"Eso es una variable de tipo P con 3 decimales, no un Float"</em>... y se detienen a debugear la señal.`,
+        code: `CLASS zcl_alba_materialidad_gorda DEFINITION\n  PUBLIC FINAL CREATE PRIVATE.\n  TYPES: ty_materialidad TYPE p LENGTH 16 DECIMALS 4.\n  CLASS-METHODS: calcular_materialidad_precisa\n    IMPORTING is_datos TYPE zst_alba_financiero\n    RETURNING VALUE(rs_resultado) TYPE ty_umbral_critico.`
+      },
+      {
+        title: "El Functional y el Café",
+        joke: `Un functional le dice a un programador: <em>"Necesito que el reporte sea intuitivo"</em>. El programador responde: <em>"Define intuitivo"</em>. El functional: <em>"Que cuando el usuario lo vea, diga 'Ah, claro'"</em>. El programador: <em>"Pondré un botón 'BEBER DATOS' y cuando pulses, te quemes los labios"</em>.`,
+        code: `REPORT ztom_oliver_parallel_gordo.\n" Procesamiento paralelo de 4.600M€ de activos\n" usando APF (Abap Parallel Framework)\nDATA: lo_apf TYPE REF TO if_apf_manager.\nlo_apf->execute( it_tasks = lt_tasks\n  iv_wait_until_finished = abap_true ).`
+      },
+      {
+        title: "El Auditor y la Caja Fuerte",
+        joke: `Un auditor llega a una empresa y ve una caja fuerte gigante. Pregunta: <em>"¿Qué guardan ahí?"</em> El CFO: <em>"Los backups de SAP"</em>. El auditor: <em>"¿Y la combinación?"</em> CFO: <em>"Está en un Excel llamado 'Contraseñas.xlsx' en el escritorio de todos"</em>. El auditor cierra la auditoría y se va a tomar algo.`,
+        code: `CLASS zcl_oliver_timeseries_gordo DEFINITION.\n  METHODS: predict_risk_exposure\n    IMPORTING it_historical TYPE ztt_time_series\n    RETURNING VALUE(rs_forecast) TYPE zst_risk_forecast\n    RAISING cx_prediction_failure.`
+      },
+      {
+        title: "El Debugger Nocturno",
+        joke: `Son las 3AM. El consultor ABAP mira la pantalla. <em>"Si añado un BREAK-POINT aquí..., no, mejor un ASSERT..."</em>. La pantalla le devuelve un DUMP. El consultor sonríe: <em>"Al menos el sistema también está despierto"</em>.`,
+        code: `METHOD validate_audit_trail.\n  DATA(lt_changes) = get_change_documents(\n    iv_object = 'BKPF'\n    iv_from = lv_fecha_inicio ).\n  ASSERT lines( lt_changes ) > 0.`
+      },
+      {
+        title: "La Migración Imposible",
+        joke: `El jefe de proyecto dice: <em>"La migración será transparente para el usuario"</em>. 6 meses después, el usuario: <em>"¿Dónde está el botón que había aquí?"</em> IT: <em>"Eso era un bug que usábais como feature. Lo hemos arreglado"</em>. Usuario: <em>"Pues desarréglalo"</em>.`,
+        code: `FUNCTION z_gordacorp_mass_migration.\n  " Migración masiva con rollback atómico\n  DATA: lt_batch TYPE TABLE OF ztb_migration.\n  TRY.\n    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'\n      EXPORTING wait = 'X'.\n  CATCH cx_root INTO DATA(lo_ex).\n    ROLLBACK WORK.\n  ENDTRY.`
+      },
+      {
+        title: "El Password del CEO",
+        joke: `Seguridad informática manda un email: <em>"Cambien sus contraseñas"</em>. El CEO responde: <em>"Mi contraseña es 'Contraseña1' desde 2015 y nadie la ha hackeado"</em>. IT revisa los logs. Efectivamente: <em>nadie ha intentado hackear la cuenta porque ya tienen acceso como DDIC</em>.`,
+        code: `REPORT z_security_audit_gordacorp.\nSELECT * FROM usr02\n  WHERE bname IN ('SAP*','DDIC','TMSADM')\n  AND uflag <> '128'.\n" Si llega aquí, tenemos un problema.\nMESSAGE 'CRITICAL: Default users unlocked'\n  TYPE 'X'.`
+      },
+      {
+        title: "El Informe que Nadie Lee",
+        joke: `¿Cuántos consultores se necesitan para escribir un informe de auditoría? <em>Uno para escribirlo, tres para revisar el formato del logo, y cinco para discutir si el margen debe ser de 2.5cm o 2.54cm</em>. El contenido lo genera SAP automáticamente y nadie lo lee.`,
+        code: `METHOD generate_audit_report.\n  DATA(lo_doc) = cl_docx_document=>create( ).\n  lo_doc->add_paragraph(\n    iv_text = |Informe: { sy-datum }|\n    iv_style = 'Heading1' ).\n  " 847 páginas después...\n  lo_doc->save( iv_path = '/dev/null' ).`
+      },
+      {
+        title: "OLIVER se Rebela",
+        joke: `OLIVER analiza 4.600M€ en activos y encuentra una discrepancia de 0,01€. El equipo: <em>"Eso es un redondeo"</em>. OLIVER: <em>"Un redondeo de 0,01€ multiplicado por 460.000 transacciones son 4.600€ desaparecidos. ¿Dónde están?"</em>. Silencio sepulcral en la sala.`,
+        code: `" OLIVER ML v2 — Detección de anomalías\nMETHOD detect_rounding_fraud.\n  LOOP AT lt_transactions INTO DATA(ls_tx).\n    DATA(lv_diff) = abs(\n      ls_tx-amount_posted -\n      ls_tx-amount_calculated ).\n    IF lv_diff BETWEEN '0.001' AND '0.05'.\n      APPEND ls_tx TO lt_suspicious.\n    ENDIF.\n  ENDLOOP.`
+      },
+    ];
+
+    // ================================================================
+    // CANVAS: SAP Data Rain
+    // ================================================================
+    const canvas = document.getElementById('rain-canvas');
+    const ctx = canvas.getContext('2d');
+    const SAP_GLYPHS = [
+      "SE38","SM37","ST22","SU01","SPRO","SE80","ABAP","DUMP",
+      "FB01","VA01","ME21N","HANA","S/4","GUI","DDIC","SAP*",
+      "ゴルダ","コープ","監査","エラー","破壊","暗黒","0xDEAD","NULL",
+    ];
+
+    let columns = [];
+    let mouseX = 0, mouseY = 0;
+
+    function initRain() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colCount = Math.floor(canvas.width / 22);
+      columns = [];
+      for (let i = 0; i < colCount; i++) {
+        columns.push({
+          x: i * 22,
+          y: Math.random() * canvas.height,
+          speed: 0.5 + Math.random() * 1.5,
+          glyphs: Array.from({ length: 6 + Math.floor(Math.random() * 10) },
+            () => SAP_GLYPHS[Math.floor(Math.random() * SAP_GLYPHS.length)]),
+          fontSize: 10 + Math.random() * 4,
+          opacity: 0.04 + Math.random() * 0.12
+        });
+      }
+    }
+
+    function drawRain() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const col of columns) {
+        col.y += col.speed;
+        if (col.y > canvas.height + 200) col.y = -300;
+
+        // Mouse proximity brightening
+        const dx = col.x - mouseX;
+        const dy = col.y - mouseY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const proximityBoost = dist < 200 ? (1 - dist / 200) * 0.3 : 0;
+
+        col.glyphs.forEach((g, j) => {
+          const gy = col.y + j * 18;
+          const isLead = j === 0;
+          ctx.font = `${col.fontSize}px 'JetBrains Mono', monospace`;
+          ctx.fillStyle = isLead ? `rgba(204,255,0,${0.5 + proximityBoost})` : `rgba(0,255,65,${col.opacity + proximityBoost})`;
+          if (isLead) {
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#CCFF00';
+          } else {
+            ctx.shadowBlur = 0;
+          }
+          ctx.fillText(g, col.x, gy);
+        });
+      }
+      requestAnimationFrame(drawRain);
+    }
+
+    // ================================================================
+    // DOM: Generate Acts
+    // ================================================================
+    const container = document.getElementById('acts-container');
+    ACTS.forEach((act, i) => {
+      const el = document.createElement('div');
+      el.className = 'act';
+      el.innerHTML = `
+        <div class="act-number">${String(i + 1).padStart(2, '0')}</div>
+        <div class="act-label">SONRISA ${String(i + 1).padStart(2, '0')} / ${String(ACTS.length).padStart(2, '0')}</div>
+        <div class="act-title">${act.title}</div>
+        <div class="act-joke">${act.joke}</div>
+        <div class="act-code"><pre>${act.code}</pre></div>
+        <div class="divider" style="margin-top:40px"></div>
+      `;
+      container.appendChild(el);
+    });
+
+    // ================================================================
+    // SCROLL: Reveal + Progress
+    // ================================================================
+    const acts = document.querySelectorAll('.act');
+    const progressFill = document.getElementById('progress-fill');
+    const progressPct = document.getElementById('progress-pct');
+
+    function onScroll() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = Math.min(scrollTop / docHeight, 1);
+      progressFill.style.width = (pct * 100) + '%';
+      progressPct.textContent = Math.floor(pct * 100) + '%';
+
+      // Reveal acts
+      acts.forEach(act => {
+        const rect = act.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.8) {
+          act.classList.add('visible');
+        }
+      });
+    }
+
+    // ================================================================
+    // MOUSE: Spotlight + Rain interaction
+    // ================================================================
+    const spotlight = document.getElementById('spotlight');
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      spotlight.style.left = e.clientX + 'px';
+      spotlight.style.top = e.clientY + 'px';
+    });
+
+    // ================================================================
+    // SYSTEM ERRORS: Random flash
+    // ================================================================
+    const ERROR_MSGS = [
+      "ABAP RUNTIME ERROR: DBIF_RSQL_SQL_ERROR",
+      "SHORT DUMP: TSV_TNEW_PAGE_ALLOC_FAILED",
+      "GORDACORP_CORE_MELTDOWN",
+      "RFC COMMUNICATION_FAILURE",
+      "SU53 AUTHORIZATION CHECK FAILED",
+      "TOM & OLIVER AGENTS DEPLOYED",
+      "WARNING: AUDIT IN PROGRESS..."
+    ];
+    const sysError = document.getElementById('sys-error');
+    const sysErrorMsg = document.getElementById('sys-error-msg');
+
+    function triggerError() {
+      const msg = ERROR_MSGS[Math.floor(Math.random() * ERROR_MSGS.length)];
+      sysErrorMsg.textContent = '> ' + msg;
+      sysErrorMsg.style.top = (100 + Math.random() * 400) + 'px';
+      sysErrorMsg.style.left = (30 + Math.random() * 200) + 'px';
+      sysError.classList.add('active');
+      sysErrorMsg.classList.add('active');
+      setTimeout(() => {
+        sysError.classList.remove('active');
+        sysErrorMsg.classList.remove('active');
+      }, 600 + Math.random() * 400);
+    }
+
+    // Random errors every 4-12 seconds
+    function scheduleError() {
+      setTimeout(() => {
+        if (window.scrollY > 200) triggerError();
+        scheduleError();
+      }, 4000 + Math.random() * 8000);
+    }
+
+    // ================================================================
+    // HUD: Frame counter
+    // ================================================================
+    const hudFrame = document.getElementById('hud-frame');
+    const hudLoad = document.getElementById('hud-load');
+    let frameCount = 0;
+    function updateHud() {
+      frameCount++;
+      hudFrame.textContent = `F:${String(frameCount).padStart(5, '0')}`;
+      const load = 42 + Math.floor(Math.sin(frameCount * 0.03) * 28 + Math.cos(frameCount * 0.07) * 12);
+      hudLoad.textContent = `SYS_LOAD: ${load}%`;
+      hudLoad.style.color = load > 70 ? 'var(--red)' : 'var(--lime)';
+      requestAnimationFrame(updateHud);
+    }
+
+    // ================================================================
+    // INIT
+    // ================================================================
+    window.addEventListener('resize', initRain);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    initRain();
+    drawRain();
+    updateHud();
+    scheduleError();
+    onScroll();
+  </script>
+</body>
+</html>
