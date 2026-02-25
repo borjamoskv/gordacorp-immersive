@@ -345,6 +345,7 @@
     <div class="hud-tr">
       <div id="hud-frame">F:00000</div>
       <div id="hud-load" style="margin-top:4px;opacity:0.5">SYS_LOAD: 42%</div>
+      <div id="hud-visits" style="margin-top:4px;opacity:0.8;color:var(--orange)">VISITAS: --</div>
     </div>
     <div class="hud-bl">SAP/R3 // GORDACORP AUDIT ENGINE v6.6.6</div>
     <div class="hud-br">
@@ -583,6 +584,20 @@
     }
 
     // ================================================================
+    // VISITS COUNTER
+    // ================================================================
+    function fetchVisits() {
+      fetch('https://api.counterapi.dev/v1/borjamoskv_gordacorp_immersive/visits/up')
+        .then(res => res.json())
+        .then(data => {
+          if(data && data.count) {
+             document.getElementById('hud-visits').textContent = `VISITAS: ${data.count}`;
+          }
+        })
+        .catch(err => console.error('GORDACORP ERROR: Counter API unreachable.', err));
+    }
+
+    // ================================================================
     // INIT
     // ================================================================
     window.addEventListener('resize', initRain);
@@ -591,6 +606,7 @@
     drawRain();
     updateHud();
     scheduleError();
+    fetchVisits();
     onScroll();
   </script>
 </body>
